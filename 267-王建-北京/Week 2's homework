@@ -1,0 +1,55 @@
+import cv2
+from skimage.color import rgb2gray
+import numpy as np
+import matplotlib.pyplot as plt
+
+def read_image(file_path):
+    # 读取图像并返回
+    return cv2.imread(file_path)
+
+def convert_to_gray_manual(image):
+    # 将图像从 BGR 转换为灰度（使用自定义权重）
+    # 直接使用了 NumPy 的矢量化操作，而不是循环
+    weights = np.array([0.299, 0.587, 0.114])
+    return np.sum(image * weights, axis=2)
+
+def convert_to_gray_skimage(image):
+    # 首先将 BGR 转换为 RGB，然后使用 skimage 的 rgb2gray
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return rgb2gray(image_rgb)
+
+def resize_image(image, new_height=2000, new_width=2000, interpolation=cv2.INTER_NEAREST):
+    # 使用插值方法调整图像大小
+    return cv2.resize(image, (new_width, new_height), interpolation=interpolation)
+
+def show_images(images, titles):
+    # 显示一系列图像
+    n_images = len(images)
+    fig, axes = plt.subplots(nrows=1, ncols=n_images, figsize=(15, 5))
+    for ax, image, title in zip(axes.flatten(), images, titles):
+        if len(image.shape) == 3:
+            ax.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        else:
+            ax.imshow(image, cmap='gray')
+        ax.set_title(title)
+        ax.axis('off')
+    plt.show()
+
+# 主程序
+if __name__ == '__main__':
+    # 读取图像
+    image = read_image("lenna.png")
+
+    # 灰度化
+    gray_manual = convert_to_gray_manual(image)
+    gray_skimage = convert_to_gray_skimage(image)
+
+    # 调整大小
+    resized_image = resize_image(image)
+    resized_gray_image = resize_image(gray_skimage, new_height=2000, new_width=2000)
+    resized_gray_image = np.uint8(resized_gray_image * 255)  # 缩放回 [0, 255] 范围
+
+    # 显示结果
+    show_images([image, gray_manual, gray_skimage, resized_image, resized_gray_image],
+                ['Original Image', 'Grayscale (Manual)', 'Grayscale (skimage)',
+                 'Nearest Neighbor (Color)', 'Nearest Neighbor (Grayscale)'])
