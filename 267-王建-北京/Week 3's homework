@@ -1,0 +1,61 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 读取图像并转换为灰度图
+img = cv2.imread("lenna.png", 0)
+if img is None:
+    print("Error: Could not read the image.")
+    exit()
+
+# 灰度图像直方图均衡化
+gray = img.copy()  # 保留原始灰度图像用于后续显示
+equ = cv2.equalizeHist(gray)
+
+# Sobel边缘检测
+sobelx = cv2.Sobel(equ, cv2.CV_64F, 1, 0, ksize=3)
+sobely = cv2.Sobel(equ, cv2.CV_64F, 0, 1, ksize=3)
+abs_sobelx = cv2.convertScaleAbs(sobelx)
+abs_sobely = cv2.convertScaleAbs(sobely)
+sobel_combined = cv2.addWeighted(abs_sobelx, 0.5, abs_sobely, 0.5, 0)
+sobel_combined = np.uint8(sobel_combined)  # 确保是8位无符号整数
+
+# 绘制直方图
+hist_orig = cv2.calcHist([gray], [0], None, [256], [0, 256])
+hist_equ = cv2.calcHist([equ], [0], None, [256], [0, 256])
+
+# 创建matplotlib窗口和子图布局
+fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+
+# 显示直方图
+axs[0, 0].plot(hist_orig, label='Original')
+axs[0, 0].plot(hist_equ, label='Equalized')
+axs[0, 0].set_xlim([0, 256])
+axs[0, 0].legend()
+axs[0, 0].set_title("Grayscale Histogram")
+axs[0, 0].set_xlabel("Gray Levels")
+axs[0, 0].set_ylabel("Number of Pixels")
+
+# 显示原始图像
+axs[0, 1].imshow(gray, cmap='gray')
+axs[0, 1].set_title("Original Image")
+axs[0, 1].axis('off')
+
+# 显示均衡化图像
+axs[1, 0].imshow(equ, cmap='gray')
+axs[1, 0].set_title("Equalized Image")
+axs[1, 0].axis('off')
+
+# 显示Sobel边缘检测结果
+axs[1, 1].imshow(sobel_combined, cmap='gray')
+axs[1, 1].set_title("Sobel Edges")
+axs[1, 1].axis('off')
+
+# 调整子图之间的间距
+fig.tight_layout()
+
+# 显示matplotlib窗口
+plt.show()
+
+# OpenCV窗口不再需要，因为我们用matplotlib展示了
+# cv2.destroyAllWindows()
